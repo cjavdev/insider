@@ -5,7 +5,7 @@ namespace :insider do
       1.upto(4) do |qtr|
         `wget ftp://ftp.sec.gov/edgar/full-index/#{ year }/QTR#{ qtr }/company.zip`
         `unzip company.zip`
-        `mv company.idx company.#{ year }.#{ qtr }.idx`
+        `mv company.idx company.#{ year }.#{ qtr }.idx0`
         `rm company.zip`
       end
     end
@@ -15,10 +15,10 @@ namespace :insider do
   task :clean_idx => :environment do
     1993.upto(2013) do |year|
       1.upto(4) do |qtr|
-        puts "cleaning headers for company.#{ year }.#{ qtr }.cln.idx"
+        puts "cleaning headers for company.#{ year }.#{ qtr }"
         header = true
-        File.open("company.#{ year }.#{ qtr }.cln.idx", 'w') do |fout|
-          File.open("company.#{ year }.#{ qtr }.idx", 'r').each do |fin|
+        File.open("company.#{ year }.#{ qtr }.idx1", 'w') do |fout|
+          File.open("company.#{ year }.#{ qtr }.idx0", 'r').each do |fin|
             fout.puts fin unless header
             header = false if fin.include?("------")
           end
@@ -28,11 +28,11 @@ namespace :insider do
     1993.upto(2013) do |year|
       1.upto(4) do |qtr|
         puts "removing non insider filings for company.#{ year }.#{ qtr }.cln.idx"
-        File.open("company.#{ year }.#{ qtr }.cln2.idx", 'w') do |fout|
-          File.open("company.#{ year }.#{ qtr }.cln.idx", 'r').each do |fin|
+        File.open("company.#{ year }.#{ qtr }.idx2", 'w') do |fout|
+          File.open("company.#{ year }.#{ qtr }.idx1", 'r').each do |fin|
             next if fin.include?("EXPLORA INVESTIMENTOS GEST")
             begin
-              if /4         |3           |4\/A           / =~ fin
+              if /(?<name>(\w+\s+)+)(?<type>4           |3           |4\/A           )(?<cik>\w+     )(?<filed_on>(19|20)\d\d[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01]))(  )(?<link>[a-zA-Z0-9 \/ -.]*)/ =~ fin
                 unless / S-4      / =~ fin
                   fout.puts fin
                 end
@@ -50,11 +50,15 @@ namespace :insider do
   desc "load indicies into db"
   task :load_idx => :environment do
     r = Regexp.new('(?<name>(\w+\s+)+)(?<type>4           |3           |4\/A           )(?<cik>\w+     )(?<filed_on>(19|20)\d\d[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01]))(  )(?<link>[a-zA-Z0-9 \/ -.]*)')
-    1994.upto(1994) do |year|
-      4.upto(4) do |qtr|
-        File.open("/Users/w1zeman1p/Documents/github/ftpsec/insider_app/lib/tasks/company.#{ year }.#{ qtr }.cln2.idx", 'r').each do |fin|
-          mdata = r.match(fin)
-          p mdata
+    doc_count = 0
+    1996.upto(2013) do |year|
+      1.upto(4) do |qtr|
+        p [year, qtr]
+        File.open("company.#{ year }.#{ qtr }.idx3", 'w') do |fout|
+          File.open("company.#{ year }.#{ qtr }.idx2", 'r').each do |fin|
+            m = r.match(fin)
+            fout.puts "INSERT INTO documents (created_at, updated_at, company_name, type, cik, filed_on, link) VALUES (now(), now(), '#{ m[:name].strip }', '#{ m[:type].strip }','#{ m[:cik].strip }','#{ m[:filed_on].strip }','#{ m[:link].strip }');"
+          end
         end
       end
     end
