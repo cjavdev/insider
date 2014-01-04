@@ -62,5 +62,7 @@ namespace :insider do
         end
       end
     end
+    puts "for f in *.idx3 ; do psql #{ config[Rails.env]['database'] } -f $f ; done"
+    #`for f in *.idx3 ; do psql #{ config[Rails.env]["database"] } -f $f ; done`
   end
 end
