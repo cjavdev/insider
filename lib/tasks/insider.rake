@@ -67,6 +67,9 @@ namespace :insider do
   end
 
   task :download_filings => :environment do
-     
+    Dir.chdir("docs/fetched")
+    Document.not_downloaded.limit(1).each do |doc|
+      doc.download
+    end
   end
 end
