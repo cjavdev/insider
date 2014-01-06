@@ -8,6 +8,9 @@
 /.bundle
 *.idx*
 *.rawform
+*.txt
+*.nc
+*.gz
 # Ignore the default SQLite database.
 /db/*.sqlite3
 

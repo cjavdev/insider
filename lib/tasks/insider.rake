@@ -1,3 +1,4 @@
+require 'net/ftp'
 namespace :insider do
   desc "download indicies"
   task :download_idx => :environment do
@@ -67,9 +68,18 @@ namespace :insider do
   end
 
   task :download_filings => :environment do
-    Dir.chdir("docs/fetched")
-    Document.not_downloaded.limit(1).each do |doc|
-      doc.download
+    Dir.chdir(Rails.root.join("edgar"))
+    ftp = Net::FTP.new("ftp.sec.gov")
+    ftp.login
+    1997.upto(2013) do |year|
+      1.upto(4) do |qtr|
+        ftp.chdir("/edgar/Feed/#{ year }/QTR#{ qtr }")
+        days = ftp.nlst("*.gz")
+        days.each_with_index do |d, x|
+          puts "Downloading #{ x }/#{ days.count }: #{ d }"
+          ftp.getbinaryfile(d) unless File.exists?(d)
+        end
+      end
     end
   end
 end
