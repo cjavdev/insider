@@ -9,8 +9,6 @@ namespace :insider do
     url = 'http://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=&company=&dateb=&owner=only&start=0&count=40&output=atom'
     open(url) do |rss|
       feed = RSS::Parser.parse(rss)
-      puts "Title: #{ feed.title }"
-      p feed.entries.first
       feed.entries.each do |entry|
         doc = entry.link.href.gsub("-index.htm", ".txt")
         title = entry.title.to_s.gsub("<title>", "")
@@ -25,9 +23,17 @@ namespace :insider do
             :filed_on => filed_on,
             :doc_type => type
           })
+          puts "New Doc: #{ doc }"
         end
-        p doc
       end
+    end
+  end
+
+  desc "process unhandled files"
+  task :process => :environment do
+    Document.not_downloaded.each do |document|
+      content = open(document.link).read
+      puts content
     end
   end
 
