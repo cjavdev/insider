@@ -1,7 +1,7 @@
 require 'net/ftp'
 
 class Document < ActiveRecord::Base
-  attr_accessible :cik, :company_name, :filed_on, :link, :type, :handled
+  attr_accessible :cik, :company_name, :filed_on, :link, :doc_type, :handled
   validates_uniqueness_of :link
 
   def self.not_downloaded
